@@ -31,6 +31,9 @@ public partial class App : Application
     private static readonly IHost _host = Host.CreateDefaultBuilder()
         .ConfigureLogging(logging => logging.ClearProviders()
             .AddProvider(new FileLoggerProvider())
+            // 默认最小级别是 Information，会把 Debug/Trace 在框架层就过滤成 NullLogger，
+            // 使 FileLogger 收不到；这里放开到 Trace，实际级别仍由 FileLogger 按设置项判断
+            .SetMinimumLevel(LogLevel.Trace)
             .AddFilter("Microsoft.Hosting.Lifetime", LogLevel.None))
         .ConfigureServices((context, services) =>
         {
