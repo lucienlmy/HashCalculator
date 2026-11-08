@@ -623,4 +623,85 @@ namespace HashCalculator
         /// </summary>
         CSIDL_BITBUCKET = 0x0000000a,
     }
+
+    /// <summary>
+    /// CreateFile 的 dwFlagsAndAttributes 参数值：低位是文件属性（FILE_ATTRIBUTE_*），
+    /// 高位是打开方式标志（FILE_FLAG_*），两类值共用一个 32 位字段。<br/>
+    /// 注意：个别位在两类之间被复用（如 0x00100000 既是 FILE_ATTRIBUTE_UNPINNED
+    /// 又是 FILE_FLAG_OPEN_NO_RECALL），取用前先确认语境。<br/>
+    /// https://learn.microsoft.com/en-us/windows/win32/fileio/file-attribute-constants<br/>
+    /// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew<br/>
+    /// </summary>
+    public static class FILE_FLAGS_AND_ATTRIBUTES
+    {
+        // 文件属性（FILE_ATTRIBUTE_*）
+        public const uint FILE_ATTRIBUTE_READONLY = 0x00000001;
+
+        public const uint FILE_ATTRIBUTE_HIDDEN = 0x00000002;
+
+        public const uint FILE_ATTRIBUTE_SYSTEM = 0x00000004;
+
+        public const uint FILE_ATTRIBUTE_DIRECTORY = 0x00000010;
+
+        public const uint FILE_ATTRIBUTE_ARCHIVE = 0x00000020;
+
+        public const uint FILE_ATTRIBUTE_DEVICE = 0x00000040;
+
+        /// <summary>没有设置其它属性，仅在单独使用时有效</summary>
+        public const uint FILE_ATTRIBUTE_NORMAL = 0x00000080;
+
+        public const uint FILE_ATTRIBUTE_TEMPORARY = 0x00000100;
+
+        public const uint FILE_ATTRIBUTE_SPARSE_FILE = 0x00000200;
+
+        public const uint FILE_ATTRIBUTE_REPARSE_POINT = 0x00000400;
+
+        public const uint FILE_ATTRIBUTE_COMPRESSED = 0x00000800;
+
+        public const uint FILE_ATTRIBUTE_OFFLINE = 0x00001000;
+
+        public const uint FILE_ATTRIBUTE_NOT_CONTENT_INDEXED = 0x00002000;
+
+        public const uint FILE_ATTRIBUTE_ENCRYPTED = 0x00004000;
+
+        public const uint FILE_ATTRIBUTE_INTEGRITY_STREAM = 0x00008000;
+
+        public const uint FILE_ATTRIBUTE_VIRTUAL = 0x00010000;
+
+        public const uint FILE_ATTRIBUTE_NO_SCRUB_DATA = 0x00020000;
+
+        // 打开方式标志（FILE_FLAG_*）
+        /// <summary>
+        /// 提示顺序访问，便于文件系统与缓存优化预读
+        /// </summary>
+        public const uint FILE_FLAG_SEQUENTIAL_SCAN = 0x08000000;
+
+        /// <summary>
+        /// 不使用系统文件缓存，读写长度与偏移需按扇区对齐
+        /// </summary>
+        public const uint FILE_FLAG_NO_BUFFERING = 0x20000000;
+
+        /// <summary>
+        /// 重叠 I/O，读写不依赖文件指针，由 OVERLAPPED 指定位置
+        /// </summary>
+        public const uint FILE_FLAG_OVERLAPPED = 0x40000000;
+    }
+
+    /// <summary>
+    /// https://learn.microsoft.com/en-us/windows/win32/debug/system-error-codes
+    /// </summary>
+    public static class WIN32_ERROR
+    {
+        /// <summary>重叠 I/O 已提交，稍后完成</summary>
+        public const int ERROR_IO_PENDING = 997;
+    }
+
+    /// <summary>
+    /// https://learn.microsoft.com/en-us/windows/win32/api/handleapi/nf-handleapi-closehandle
+    /// </summary>
+    public static class HANDLE
+    {
+        /// <summary>CreateFile 等失败时返回的无效句柄值（-1）</summary>
+        public static readonly IntPtr INVALID_HANDLE_VALUE = new IntPtr(-1);
+    }
 }

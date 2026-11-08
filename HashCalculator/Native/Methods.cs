@@ -338,6 +338,20 @@ internal static class KERNEL32
         IntPtr hTemplateFile);
 
     /// <summary>
+    /// 这里用 uint 接收 dwFlagsAndAttributes，便于直接拼 FILE_FLAGS_AND_ATTRIBUTES 中的值；
+    /// 其余参数与上面以 FileAttributes 接收的重载一致。<br/>
+    /// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createfilew
+    /// </summary>
+    [DllImport("kernel32.dll", EntryPoint = "CreateFileW", CharSet = CharSet.Unicode, SetLastError = true)]
+    internal static extern IntPtr CreateFileWithFlags(
+        [MarshalAs(UnmanagedType.LPWStr)] string lpFileName,
+        [MarshalAs(UnmanagedType.U4)] FileAccess dwDesiredAccess,
+        [MarshalAs(UnmanagedType.U4)] FileShare dwShareMode,
+        IntPtr lpSecurityAttributes,
+        [MarshalAs(UnmanagedType.U4)] FileMode dwCreationDisposition,
+        uint dwFlagsAndAttributes, IntPtr hTemplateFile);
+
+    /// <summary>
     /// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-getfileinformationbyhandle
     /// </summary>
     [DllImport("kernel32.dll")]
@@ -361,4 +375,54 @@ internal static class KERNEL32
     /// </summary>
     [DllImport("kernel32.dll")]
     internal static extern uint GetCurrentThreadId();
+
+    /// <summary>
+    /// 重叠 I/O 用：每个 OVERLAPPED 各配一个手动复位事件，完成时由内核置信号。<br/>
+    /// https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-createeventw
+    /// </summary>
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    internal static extern IntPtr CreateEventW(IntPtr lpEventAttributes, bool bManualReset,
+        bool bInitialState, string lpName);
+
+    /// <summary>
+    /// https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-resetevent
+    /// </summary>
+    [DllImport("kernel32.dll", SetLastError = true)]
+    internal static extern bool ResetEvent(IntPtr hEvent);
+
+    /// <summary>
+    /// https://learn.microsoft.com/en-us/windows/win32/api/ioapiset/nf-ioapiset-cancelioex
+    /// </summary>
+    [DllImport("kernel32.dll", SetLastError = true)]
+    internal static extern bool CancelIoEx(IntPtr hFile, IntPtr lpOverlapped);
+
+    /// <summary>
+    /// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-setfilepointerex
+    /// </summary>
+    [DllImport("kernel32.dll", SetLastError = true)]
+    internal static extern bool SetFilePointerEx(IntPtr hFile, long liDistanceToMove,
+        IntPtr lpNewFilePointer, uint dwMoveMethod);
+
+    /// <summary>
+    /// https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject
+    /// </summary>
+    [DllImport("kernel32.dll", SetLastError = true)]
+    internal static extern uint WaitForSingleObject(IntPtr hHandle, uint dwMilliseconds);
+
+    /// <summary>
+    /// 重叠 I/O 版本：此时 lpNumberOfBytesRead 必须显式传 NULL（不能省略该参数，
+    /// 否则 x64 下第 5 个参数会取到寄存器里的残留值，被内核当成指针写入而崩溃）。<br/>
+    /// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-readfile
+    /// </summary>
+    [DllImport("kernel32.dll", EntryPoint = "ReadFile", SetLastError = true)]
+    internal static extern bool ReadFileAsync(IntPtr hFile, IntPtr lpBuffer, uint nNumberOfBytesToRead,
+        IntPtr lpNumberOfBytesRead, IntPtr lpOverlapped);
+
+    /// <summary>
+    /// 同步版本，lpOverlapped 传 IntPtr.Zero。<br/>
+    /// https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-readfile
+    /// </summary>
+    [DllImport("kernel32.dll", EntryPoint = "ReadFile", SetLastError = true)]
+    internal static extern bool ReadFileSync(IntPtr hFile, IntPtr lpBuffer, uint nNumberOfBytesToRead,
+        out uint lpNumberOfBytesRead, IntPtr lpOverlapped);
 }

@@ -117,4 +117,19 @@ namespace HashCalculator
         public uint nFileIndexHigh;
         public uint nFileIndexLow;
     }
+
+    /// <summary>
+    /// https://learn.microsoft.com/en-us/windows/win32/api/minwinbase/ns-minwinbase-overlapped
+    /// Internal/InternalHigh 属于内核内部状态，托管侧不用，因此按指针宽度占位。
+    /// 偏移与高 32 位用 uint，重叠 I/O 时由调用方按 64 位文件位置填充。
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    public struct OVERLAPPED
+    {
+        public IntPtr Internal;
+        public IntPtr InternalHigh;
+        public uint Offset;
+        public uint OffsetHigh;
+        public IntPtr hEvent;
+    }
 }
