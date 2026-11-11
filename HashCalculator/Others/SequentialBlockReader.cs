@@ -272,7 +272,7 @@ internal sealed class SequentialBlockReader : IDisposable
             this._submitted = 1;
             if (KERNEL32.WaitForSingleObject(this._completionEvents[0], Infinite) != 0)
             {
-                failure = $"预读首块时等待完成失败，错误码 {Marshal.GetLastWin32Error()}";
+                failure = $"预读首块时等待读取完成失败，错误码：{Marshal.GetLastWin32Error()}";
                 return false;
             }
             int status = Marshal.ReadInt32(this._overlapped);
