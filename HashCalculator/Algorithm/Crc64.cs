@@ -4,7 +4,8 @@ using System.Security.Cryptography;
 
 namespace HashCalculator;
 
-internal class Crc64Xz : HashAlgorithm, IHashAlgoInfo
+// 规格：CRC-64/XZ（反射多项式 0xC96C5795D7870F42，输入输出各按位取反），参数与 xz-embedded 的 xz_crc64 一致（OpenHashLibs/CRC64）
+internal class Crc64 : HashAlgorithm, IHashAlgoInfo
 {
     private ulong previousCrc64 = 0ul;
 
@@ -31,7 +32,7 @@ internal class Crc64Xz : HashAlgorithm, IHashAlgoInfo
 
     public IHashAlgoInfo NewInstance()
     {
-        return new Crc64Xz();
+        return new Crc64();
     }
 
     protected override void HashCore(byte[] array, int ibStart, int cbSize)

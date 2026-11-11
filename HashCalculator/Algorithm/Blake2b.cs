@@ -3,7 +3,8 @@ using System.Runtime.InteropServices;
 
 namespace HashCalculator;
 
-internal class OfficialBlake2b : OfficialBlake2
+// 实现：BLAKE2 官方参考实现（OpenHashLibs/Blake2）
+internal class Blake2b : Blake2
 {
     [DllImport(Settings.HashAlgs, CallingConvention = CallingConvention.Cdecl)]
     private static extern IntPtr blake2b_new();
@@ -28,11 +29,11 @@ internal class OfficialBlake2b : OfficialBlake2
 
     public override string NamePrefix => "Blake2b";
 
-    public OfficialBlake2b(int bitLength) : base(bitLength) { }
+    public Blake2b(int bitLength) : base(bitLength) { }
 
     public override IHashAlgoInfo NewInstance()
     {
-        return new OfficialBlake2b(this.bitLength);
+        return new Blake2b(this.bitLength);
     }
 
     public override void Blake2DeleteState(IntPtr statePtr)

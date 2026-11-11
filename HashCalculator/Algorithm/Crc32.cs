@@ -4,7 +4,8 @@ using System.Security.Cryptography;
 
 namespace HashCalculator;
 
-internal class StbrummeCrc32 : HashAlgorithm, IHashAlgoInfo
+// 实现：Stephan Brumme crc32（OpenHashLibs/CRC32）
+internal class Crc32 : HashAlgorithm, IHashAlgoInfo
 {
     private uint previousCrc32 = 0u;
 
@@ -31,7 +32,7 @@ internal class StbrummeCrc32 : HashAlgorithm, IHashAlgoInfo
 
     public IHashAlgoInfo NewInstance()
     {
-        return new StbrummeCrc32();
+        return new Crc32();
     }
 
     protected override void HashCore(byte[] array, int ibStart, int cbSize)

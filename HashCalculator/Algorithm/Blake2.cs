@@ -4,7 +4,8 @@ using System.Security.Cryptography;
 
 namespace HashCalculator;
 
-internal abstract class OfficialBlake2 : HashAlgorithm, IHashAlgoInfo
+// 实现：BLAKE2 官方参考实现（OpenHashLibs/Blake2）
+internal abstract class Blake2 : HashAlgorithm, IHashAlgoInfo
 {
     public readonly int bitLength;
     private AlgoType algoType = AlgoType.UNKNOWN;
@@ -62,7 +63,7 @@ internal abstract class OfficialBlake2 : HashAlgorithm, IHashAlgoInfo
         base.Dispose(disposing);
     }
 
-    public OfficialBlake2(int bitLength)
+    public Blake2(int bitLength)
     {
         int lengthInByte = bitLength / 8;
         if (bitLength < 8 || bitLength % 8 != 0 || lengthInByte > this.MaxOutputLength)

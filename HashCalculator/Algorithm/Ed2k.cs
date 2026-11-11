@@ -4,40 +4,41 @@ using System.Security.Cryptography;
 
 namespace HashCalculator;
 
-internal class RHashHas160 : HashAlgorithm, IHashAlgoInfo
+// 实现：RHash（OpenHashLibs/RHash）
+internal class Ed2k : HashAlgorithm, IHashAlgoInfo
 {
     private IntPtr _state = IntPtr.Zero;
 
     [DllImport(Settings.HashAlgs, CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr has160_new();
+    private static extern IntPtr ed2k_new();
 
     [DllImport(Settings.HashAlgs, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void has160_delete(IntPtr state);
+    private static extern void ed2k_delete(IntPtr state);
 
     [DllImport(Settings.HashAlgs, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void has160_init(IntPtr state);
+    private static extern void ed2k_init(IntPtr state);
 
     // 原生函数 length 类型是 size_t，对应 C# 的 nuint（x86 上 4 字节、x64 上 8 字节）
     [DllImport(Settings.HashAlgs, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void has160_update(IntPtr state, byte[] input, nuint length);
+    private static extern void ed2k_update(IntPtr state, byte[] input, nuint length);
 
     [DllImport(Settings.HashAlgs, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void has160_update(IntPtr state, ref byte input, nuint length);
+    private static extern void ed2k_update(IntPtr state, ref byte input, nuint length);
 
     [DllImport(Settings.HashAlgs, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void has160_final(IntPtr state, byte[] output);
+    private static extern void ed2k_final(IntPtr state, byte[] output);
 
-    public string AlgoName => "Has160";
+    public string AlgoName => "eD2k";
 
-    public AlgoType AlgoType => AlgoType.HAS160;
+    public AlgoType AlgoType => AlgoType.ED2K;
 
-    public int DigestLength => 20;
+    public int DigestLength => 16;
 
     private void DeleState()
     {
         if (this._state != IntPtr.Zero)
         {
-            has160_delete(this._state);
+            ed2k_delete(this._state);
             this._state = IntPtr.Zero;
         }
     }
@@ -51,19 +52,19 @@ internal class RHashHas160 : HashAlgorithm, IHashAlgoInfo
     public override void Initialize()
     {
         this.DeleState();
-        this._state = has160_new();
+        this._state = ed2k_new();
         if (this._state == IntPtr.Zero)
         {
             throw new Exception("Initialization failed");
         }
-        has160_init(this._state);
+        ed2k_init(this._state);
     }
 
     public void Release() => this.DeleState();
 
     public IHashAlgoInfo NewInstance()
     {
-        return new RHashHas160();
+        return new Ed2k();
     }
 
     protected override void HashCore(byte[] array, int ibStart, int cbSize)
@@ -74,13 +75,13 @@ internal class RHashHas160 : HashAlgorithm, IHashAlgoInfo
         }
         if (ibStart == 0 && cbSize == array.Length)
         {
-            has160_update(this._state, array, (nuint)cbSize);
+            ed2k_update(this._state, array, (nuint)cbSize);
         }
         else
         {
             ReadOnlySpan<byte> span = new ReadOnlySpan<byte>(array, ibStart, cbSize);
             ref byte input = ref MemoryMarshal.GetReference(span);
-            has160_update(this._state, ref input, (nuint)cbSize);
+            ed2k_update(this._state, ref input, (nuint)cbSize);
         }
     }
 
@@ -91,7 +92,7 @@ internal class RHashHas160 : HashAlgorithm, IHashAlgoInfo
             throw new InvalidOperationException("Not initialized yet");
         }
         byte[] resultBuffer = new byte[this.DigestLength];
-        has160_final(this._state, resultBuffer);
+        ed2k_final(this._state, resultBuffer);
         return resultBuffer;
     }
 }

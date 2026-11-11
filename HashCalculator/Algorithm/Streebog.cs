@@ -4,40 +4,64 @@ using System.Security.Cryptography;
 
 namespace HashCalculator;
 
-internal class RHashSHA224 : HashAlgorithm, IHashAlgoInfo
+// 实现：adegtyarev/streebog（OpenHashLibs/Streebog）；即 GOST R 34.11-2012，输出 256/512 位
+internal class Streebog : HashAlgorithm, IHashAlgoInfo
 {
+    private readonly int bitLength;
+    private AlgoType algoType = AlgoType.UNKNOWN;
     private IntPtr _state = IntPtr.Zero;
 
     [DllImport(Settings.HashAlgs, CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr sha224_new();
+    private static extern IntPtr streebog_new();
 
     [DllImport(Settings.HashAlgs, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void sha224_delete(IntPtr state);
+    private static extern void streebog_delete(IntPtr state);
 
     [DllImport(Settings.HashAlgs, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void sha224_init(IntPtr state);
+    private static extern void streebog_init(IntPtr state, uint bitLength);
 
     // 原生函数 length 类型是 size_t，对应 C# 的 nuint（x86 上 4 字节、x64 上 8 字节）
     [DllImport(Settings.HashAlgs, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void sha224_update(IntPtr state, byte[] input, nuint length);
+    private static extern void streebog_update(IntPtr state, byte[] input, nuint length);
 
     [DllImport(Settings.HashAlgs, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void sha224_update(IntPtr state, ref byte input, nuint length);
+    private static extern void streebog_update(IntPtr state, ref byte input, nuint length);
 
     [DllImport(Settings.HashAlgs, CallingConvention = CallingConvention.Cdecl)]
-    private static extern void sha224_final(IntPtr state, byte[] output);
+    private static extern void streebog_final(IntPtr state, byte[] output);
 
-    public int DigestLength { get; } = 28;
+    public int DigestLength { get; }
 
-    public string AlgoName => "SHA-224";
+    public string AlgoName => $"Streebog-{this.bitLength}";
 
-    public AlgoType AlgoType => AlgoType.SHA_224;
+    public AlgoType AlgoType
+    {
+        get
+        {
+            if (this.algoType == AlgoType.UNKNOWN &&
+                Enum.TryParse($"STREEBOG_{this.bitLength}", true, out AlgoType algo))
+            {
+                this.algoType = algo;
+            }
+            return this.algoType;
+        }
+    }
+
+    public Streebog(int bitLength)
+    {
+        if (bitLength != 256 && bitLength != 512)
+        {
+            throw new ArgumentException($"Invalid bit length");
+        }
+        this.bitLength = bitLength;
+        this.DigestLength = bitLength / 8;
+    }
 
     private void DeleteState()
     {
         if (this._state != IntPtr.Zero)
         {
-            sha224_delete(this._state);
+            streebog_delete(this._state);
             this._state = IntPtr.Zero;
         }
     }
@@ -51,19 +75,19 @@ internal class RHashSHA224 : HashAlgorithm, IHashAlgoInfo
     public override void Initialize()
     {
         this.DeleteState();
-        this._state = sha224_new();
+        this._state = streebog_new();
         if (this._state == IntPtr.Zero)
         {
             throw new Exception("Initialization failed");
         }
-        sha224_init(this._state);
+        streebog_init(this._state, (uint)this.bitLength);
     }
 
     public void Release() => this.DeleteState();
 
     public IHashAlgoInfo NewInstance()
     {
-        return new RHashSHA224();
+        return new Streebog(this.bitLength);
     }
 
     protected override void HashCore(byte[] array, int ibStart, int cbSize)
@@ -74,13 +98,13 @@ internal class RHashSHA224 : HashAlgorithm, IHashAlgoInfo
         }
         if (ibStart == 0 && cbSize == array.Length)
         {
-            sha224_update(this._state, array, (nuint)cbSize);
+            streebog_update(this._state, array, (nuint)cbSize);
         }
         else
         {
-            ReadOnlySpan<byte> sp = new ReadOnlySpan<byte>(array, ibStart, cbSize);
-            ref byte input = ref MemoryMarshal.GetReference(sp);
-            sha224_update(this._state, ref input, (nuint)cbSize);
+            ReadOnlySpan<byte> span = new ReadOnlySpan<byte>(array, ibStart, cbSize);
+            ref byte input = ref MemoryMarshal.GetReference(span);
+            streebog_update(this._state, ref input, (nuint)cbSize);
         }
     }
 
@@ -91,7 +115,7 @@ internal class RHashSHA224 : HashAlgorithm, IHashAlgoInfo
             throw new InvalidOperationException("Not initialized yet");
         }
         byte[] resultBuffer = new byte[this.DigestLength];
-        sha224_final(this._state, resultBuffer);
+        streebog_final(this._state, resultBuffer);
         return resultBuffer;
     }
 }

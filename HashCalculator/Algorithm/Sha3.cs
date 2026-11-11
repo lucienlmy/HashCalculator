@@ -4,7 +4,8 @@ using System.Security.Cryptography;
 
 namespace HashCalculator;
 
-internal class XkcpSHA3 : HashAlgorithm, IHashAlgoInfo
+// 实现：XKCP（OpenHashLibs/Keccak）
+internal class Sha3 : HashAlgorithm, IHashAlgoInfo
 {
     private readonly int bitLength;
     private int _errorCode = 0;
@@ -48,7 +49,7 @@ internal class XkcpSHA3 : HashAlgorithm, IHashAlgoInfo
         }
     }
 
-    public XkcpSHA3(int bitLength)
+    public Sha3(int bitLength)
     {
         switch (bitLength)
         {
@@ -94,7 +95,7 @@ internal class XkcpSHA3 : HashAlgorithm, IHashAlgoInfo
 
     public IHashAlgoInfo NewInstance()
     {
-        return new XkcpSHA3(this.bitLength);
+        return new Sha3(this.bitLength);
     }
 
     protected override void HashCore(byte[] array, int ibStart, int cbSize)

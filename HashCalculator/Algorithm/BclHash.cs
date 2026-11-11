@@ -3,11 +3,17 @@ using System.Security.Cryptography;
 
 namespace HashCalculator;
 
-internal abstract class NetCryptoAbstract : HashAlgorithm, IHashAlgoInfo
+/// <summary>
+/// 把 .NET 基础类库（System.Security.Cryptography）中的 HashAlgorithm
+/// 包装为 IHashAlgoInfo，使其能与原生库实现的算法走同一套调度流程。<br/>
+/// 子类只需在构造函数里注入底层算法并给出 DigestLength、AlgoName、AlgoType，
+/// Initialize、HashCore、HashFinal 均由本类转发给底层算法。
+/// </summary>
+internal abstract class BclHash : HashAlgorithm, IHashAlgoInfo
 {
     private readonly HashAlgorithm algorithm;
 
-    public NetCryptoAbstract(HashAlgorithm algorithm)
+    public BclHash(HashAlgorithm algorithm)
     {
         this.algorithm = algorithm;
     }

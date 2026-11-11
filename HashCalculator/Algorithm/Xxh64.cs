@@ -4,48 +4,42 @@ using System.Security.Cryptography;
 
 namespace HashCalculator;
 
-[StructLayout(LayoutKind.Sequential)]
-internal struct XXH128Hash
-{
-    public ulong low64;
-    public ulong high64;
-}
-
-internal class XxHashXXH3_128 : HashAlgorithm, IHashAlgoInfo
+// 实现：xxHash（OpenHashLibs/XxHash）
+internal class Xxh64 : HashAlgorithm, IHashAlgoInfo
 {
     private IntPtr _state = IntPtr.Zero;
     private XXHErrorCode _errorCode = XXHErrorCode.XXH_OK;
 
     [DllImport(Settings.HashAlgs, CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr xxh3_128_new();
+    private static extern IntPtr xxh64_new();
 
     [DllImport(Settings.HashAlgs, CallingConvention = CallingConvention.Cdecl)]
-    private static extern XXHErrorCode xxh3_128_init(IntPtr state);
+    private static extern XXHErrorCode xxh64_init(IntPtr state);
 
     // 原生函数 length 类型是 size_t，对应 C# 的 nuint（x86 上 4 字节、x64 上 8 字节）
     [DllImport(Settings.HashAlgs, CallingConvention = CallingConvention.Cdecl)]
-    private static extern XXHErrorCode xxh3_128_update(IntPtr state, byte[] input, nuint length);
+    private static extern XXHErrorCode xxh64_update(IntPtr state, byte[] input, nuint length);
 
     [DllImport(Settings.HashAlgs, CallingConvention = CallingConvention.Cdecl)]
-    private static extern XXHErrorCode xxh3_128_update(IntPtr state, ref byte input, nuint length);
+    private static extern XXHErrorCode xxh64_update(IntPtr state, ref byte input, nuint length);
 
     [DllImport(Settings.HashAlgs, CallingConvention = CallingConvention.Cdecl)]
-    private static extern XXH128Hash xxh3_128_final(IntPtr state);
+    private static extern ulong xxh64_final(IntPtr state);
 
     [DllImport(Settings.HashAlgs, CallingConvention = CallingConvention.Cdecl)]
-    private static extern XXHErrorCode xxh3_128_delete(IntPtr state);
+    private static extern XXHErrorCode xxh64_delete(IntPtr state);
 
-    public int DigestLength => 16;
+    public int DigestLength => 8;
 
-    public string AlgoName => "XXH3-128";
+    public string AlgoName => "XXH64";
 
-    public AlgoType AlgoType => AlgoType.XXH3_128;
+    public AlgoType AlgoType => AlgoType.XXH64;
 
     private void DeleteState()
     {
         if (this._state != IntPtr.Zero)
         {
-            xxh3_128_delete(this._state);
+            xxh64_delete(this._state);
             this._state = IntPtr.Zero;
         }
     }
@@ -58,20 +52,21 @@ internal class XxHashXXH3_128 : HashAlgorithm, IHashAlgoInfo
 
     public override void Initialize()
     {
+        this._errorCode = XXHErrorCode.XXH_OK;
         this.DeleteState();
-        this._state = xxh3_128_new();
+        this._state = xxh64_new();
         if (this._state == IntPtr.Zero)
         {
             throw new Exception("Initialization failed");
         }
-        this._errorCode = xxh3_128_init(this._state);
+        this._errorCode = xxh64_init(this._state);
     }
 
     public void Release() => this.DeleteState();
 
     public IHashAlgoInfo NewInstance()
     {
-        return new XxHashXXH3_128();
+        return new Xxh64();
     }
 
     protected override void HashCore(byte[] array, int ibStart, int cbSize)
@@ -84,15 +79,15 @@ internal class XxHashXXH3_128 : HashAlgorithm, IHashAlgoInfo
         {
             throw new InvalidOperationException("An error has occurred");
         }
-        if (ibStart != 0 || cbSize != array.Length)
+        if (ibStart == 0 && cbSize == array.Length)
         {
-            ReadOnlySpan<byte> span = new ReadOnlySpan<byte>(array, ibStart, cbSize);
-            ref byte input = ref MemoryMarshal.GetReference(span);
-            this._errorCode = xxh3_128_update(this._state, ref input, (nuint)cbSize);
+            this._errorCode = xxh64_update(this._state, array, (nuint)cbSize);
         }
         else
         {
-            this._errorCode = xxh3_128_update(this._state, array, (nuint)cbSize);
+            ReadOnlySpan<byte> span = new ReadOnlySpan<byte>(array, ibStart, cbSize);
+            ref byte input = ref MemoryMarshal.GetReference(span);
+            this._errorCode = xxh64_update(this._state, ref input, (nuint)cbSize);
         }
     }
 
@@ -106,14 +101,9 @@ internal class XxHashXXH3_128 : HashAlgorithm, IHashAlgoInfo
         {
             throw new InvalidOperationException("An error has occurred");
         }
-        XXH128Hash hashResult = xxh3_128_final(this._state);
-        byte[] hashBytesLow = BitConverter.GetBytes(hashResult.low64);
-        byte[] hashBytesHigh = BitConverter.GetBytes(hashResult.high64);
-        Array.Reverse(hashBytesLow);
-        Array.Reverse(hashBytesHigh);
-        byte[] resultBuffer = new byte[hashBytesLow.Length + hashBytesHigh.Length];
-        Array.Copy(hashBytesHigh, resultBuffer, hashBytesHigh.Length);
-        Array.Copy(hashBytesLow, 0, resultBuffer, hashBytesHigh.Length, hashBytesLow.Length);
+        ulong hashResult = xxh64_final(this._state);
+        byte[] resultBuffer = BitConverter.GetBytes(hashResult);
+        Array.Reverse(resultBuffer);
         return resultBuffer;
     }
 }

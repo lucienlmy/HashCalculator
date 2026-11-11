@@ -2,7 +2,8 @@
 
 namespace HashCalculator;
 
-internal class NetCryptoMD5 : NetCryptoAbstract
+// 实现：.NET（System.Security.Cryptography）
+internal class Md5 : BclHash
 {
     public override int DigestLength => 16;
 
@@ -12,8 +13,8 @@ internal class NetCryptoMD5 : NetCryptoAbstract
 
     public override IHashAlgoInfo NewInstance()
     {
-        return new NetCryptoMD5();
+        return new Md5();
     }
 
-    public NetCryptoMD5() : base(MD5.Create()) { }
+    public Md5() : base(MD5.Create()) { }
 }

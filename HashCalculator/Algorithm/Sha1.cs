@@ -2,7 +2,8 @@
 
 namespace HashCalculator;
 
-internal class NetCryptoSHA1 : NetCryptoAbstract
+// 实现：.NET（System.Security.Cryptography）
+internal class Sha1 : BclHash
 {
     public override int DigestLength => 20;
 
@@ -12,8 +13,8 @@ internal class NetCryptoSHA1 : NetCryptoAbstract
 
     public override IHashAlgoInfo NewInstance()
     {
-        return new NetCryptoSHA1();
+        return new Sha1();
     }
 
-    public NetCryptoSHA1() : base(SHA1.Create()) { }
+    public Sha1() : base(SHA1.Create()) { }
 }
